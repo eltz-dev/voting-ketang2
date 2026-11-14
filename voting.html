@@ -1,1 +1,67 @@
-
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pilih Calon · Voting Ketang “2” 43</title><link rel="stylesheet" href="style.css">
+<style>
+.grid{display:grid;gap:16px;margin-top:30px}
+@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+.cand{display:flex;gap:16px;align-items:center;padding:20px;text-align:left;font:inherit;color:inherit;cursor:pointer;
+transition:transform .15s,box-shadow .15s,background .15s;animation:pop .5s both;width:100%}
+.cand:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.cand.sel{background:#e3f1e8;transform:rotate(-1deg) translate(-2px,-2px);box-shadow:7px 7px 0 var(--green);border-color:var(--green)}
+.no{flex:none;width:54px;height:54px;border-radius:14px;background:var(--sun);border:2px solid var(--ink);display:grid;place-items:center;font:900 1.7rem Fraunces,serif}
+.sel .no{background:var(--green);color:#fff;border-color:var(--green)}
+.cand h3{font-size:1.15rem;margin-bottom:6px}
+.chip{font-size:.8rem;font-weight:700;background:var(--paper);border:1.5px solid var(--ink);border-radius:99px;padding:2px 10px}
+.mine{font-size:.78rem;color:var(--green);font-weight:700;margin-left:6px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:16px;display:flex;justify-content:center;gap:14px;align-items:center;flex-wrap:wrap;
+background:var(--card);border-top:2px solid var(--ink);transform:translateY(110%);transition:transform .3s cubic-bezier(.2,1,.3,1)}
+.bar.show{transform:none}
+.closed{text-align:center;padding:48px 24px;margin-top:30px}
+.closed .big{font-size:3rem}
+.note{margin-top:18px;font-size:.9rem;color:var(--mute);background:#fbe9c2;border:2px dashed var(--sun);border-radius:12px;padding:10px 14px}
+[hidden]{display:none!important}
+</style></head><body>
+<div class="wrap">
+<p class="eyebrow">Pemilihan Ketua Angkatan</p>
+<h1 class="title">Voting Ketang <em>“2”</em> 43</h1>
+<p class="lead">Ketuk salah satu calon, lalu tekan Coblos. Kamu hanya punya satu suara.</p>
+<p class="note" id="note" hidden>Kamu sudah memilih. Kalau memilih calon lain, suaramu akan dipindahkan, bukan ditambah.</p>
+<div class="closed card" id="closed" hidden><div class="big">⏳</div><h2>Voting belum dimulai</h2>
+<p class="lead" style="margin:10px auto 0">Tunggu panitia membuka pemilihan. Halaman ini akan terbuka sendiri begitu voting dimulai.</p></div>
+<div class="grid" id="grid"></div></div>
+<div class="bar" id="bar"><span id="barTxt"></span><button class="btn green" id="go">Coblos</button></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+<script>
+const KEY="ketang43_vote";
+let prev=null;try{prev=localStorage.getItem(KEY)}catch(e){}
+let selected=null,open=false,busy=false;
+const $=id=>document.getElementById(id);
+$("grid").innerHTML=CANDIDATES.map((c,i)=>`<button class="cand card" data-id="${c.id}" style="animation-delay:${i*70}ms">
+<div class="no">${c.no}</div><div><h3>${c.name}</h3><span class="chip">${c.kelas}</span><span class="mine" data-mine="${c.id}" hidden>pilihanmu</span></div></button>`).join("");
+document.querySelectorAll(".cand").forEach(b=>b.onclick=()=>{if(!open||busy)return;selected=selected===b.dataset.id?null:b.dataset.id;paint()});
+function paint(){
+  $("closed").hidden=open;$("grid").hidden=!open;$("note").hidden=!(open&&prev);
+  document.querySelectorAll(".cand").forEach(b=>b.classList.toggle("sel",b.dataset.id===selected));
+  document.querySelectorAll("[data-mine]").forEach(m=>m.hidden=m.dataset.mine!==prev);
+  const c=CANDIDATES.find(x=>x.id===selected);
+  $("barTxt").innerHTML=c?`Pilihanmu: <b>${c.name}</b>`:"";
+  $("bar").classList.toggle("show",!!c&&open);
+}
+db.ref("settings/votingOpen").on("value",s=>{open=s.val()===true;if(!open)selected=null;paint()});
+$("go").onclick=async()=>{
+  if(!selected||!open||busy)return;busy=true;$("go").disabled=true;$("go").textContent="Mencoblos…";
+  try{
+    const still=(await db.ref("settings/votingOpen").once("value")).val()===true;
+    if(!still){busy=false;$("go").disabled=false;$("go").textContent="Coblos";return}
+    if(prev!==selected){
+      await db.ref("votes/"+selected).transaction(v=>(v||0)+1);
+      if(prev)await db.ref("votes/"+prev).transaction(v=>Math.max((v||0)-1,0));
+      try{localStorage.setItem(KEY,selected)}catch(e){}
+    }
+    location.href="thanks.html";
+  }catch(e){busy=false;$("go").disabled=false;$("go").textContent="Coblos";alert("Koneksi bermasalah, coba lagi ya.")}
+};
+paint();
+</script></body></html>
