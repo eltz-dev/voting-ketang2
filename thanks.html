@@ -1,1 +1,29 @@
-
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terima Kasih! · Voting Ketang “2” 43</title><link rel="stylesheet" href="style.css">
+<style>
+body{background-color:#fff3d6;overflow:hidden}
+main{min-height:100vh;display:grid;place-content:center;text-align:center;padding:24px;position:relative;z-index:2}
+.emoji{font-size:4.5rem;animation:bounce 1.2s infinite}
+h1{font-size:clamp(2.4rem,9vw,4.6rem);margin:10px 0}
+h1 span{color:var(--tomato)}
+.lead{margin:0 auto 26px;font-size:1.1rem}
+canvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-18px) rotate(6deg)}}
+</style></head><body>
+<canvas id="c"></canvas>
+<main><div class="emoji">🎉</div>
+<h1>Terima kasih,<br><span>suaramu sudah masuk!</span></h1>
+<p class="lead">Kamu sudah ikut menentukan masa depan Angkatan 43. Keren banget! 💛</p>
+<div><a href="index.html"><button class="btn alt">Kembali ke awal</button></a></div></main>
+<script>
+const cv=document.getElementById("c"),x=cv.getContext("2d");let W,H;
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}size();addEventListener("resize",size);
+const cols=["#e2552d","#f4b942","#2f6f5a","#ff8fa3","#5b8def"];
+const p=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*-H,w:6+Math.random()*8,h:10+Math.random()*10,
+c:cols[Math.random()*cols.length|0],vy:2+Math.random()*3,vx:-1+Math.random()*2,r:Math.random()*6,vr:-.15+Math.random()*.3}));
+(function loop(){x.clearRect(0,0,W,H);
+p.forEach(a=>{a.y+=a.vy;a.x+=a.vx+Math.sin(a.y/40);a.r+=a.vr;if(a.y>H){a.y=-20;a.x=Math.random()*W}
+x.save();x.translate(a.x,a.y);x.rotate(a.r);x.fillStyle=a.c;x.fillRect(-a.w/2,-a.h/2,a.w,a.h);x.restore()});
+requestAnimationFrame(loop)})();
+</script></body></html>
